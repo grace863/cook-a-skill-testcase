@@ -126,6 +126,20 @@ To create an AI assistant capable of rapidly comprehending product specification
 - Apply appropriate tokenization and NLP rules based on detected language.
 - Normalize punctuation variants, unicode forms (NFD/NFC), and common OCR/digitization artifacts.
 
+### 7.4a Data Validation
+- **Input Validation:**
+  - Validate all input fields from specification and test data for required presence, correct type, allowed values, and format (e.g., email, phone, date).
+  - Reject hoặc flag invalid/ambiguous data trước khi sinh testcase.
+- **Field Normalization:**
+  - Chuẩn hóa whitespace, punctuation, unicode variants cho tất cả các trường.
+  - Auto-correct các lỗi phổ biến do OCR/digitization.
+- **Validation Testcases:**
+  - Sinh negative-path testcase cho input sai, thiếu trường bắt buộc, giá trị biên.
+  - Ví dụ:
+    | ID | Module | Scenario | Preconditions | Test Data | Steps | Expected Result | Acceptance Criteria | Priority |
+    |----|--------|----------|---------------|-----------|-------|-----------------|---------------------|----------|
+    | TC-NEG-001 | Profile | Submit invalid email | User logged in | Email: abc@ | 1. Go to profile 2. Enter invalid email 3. Save | Error message shown, email not updated | Error shown for invalid email format | Medium |
+
 ### 7.5 Confidence Scoring & Interpretation Fallbacks
 - Each term mapping and interpretation assigned a confidence score (0.0 to 1.0 scale).
 - If confidence score < configurable threshold (default 0.7):
@@ -343,6 +357,24 @@ To create an AI assistant capable of rapidly comprehending product specification
 - Cover HTTP error codes: 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 500 (Server Error), 503 (Service Unavailable).
 - Test error messages: clarity, no information disclosure, appropriate severity level.
 
+### 14.1.1 Error Handling Overview
+- **Centralized error logging:** All errors (validation, export, runtime) are logged with timestamp, operation, and detailed reason.
+- **Error categorization:**
+  - `validation_error`: Input/specification data invalid
+  - `data_error`: Test data missing, malformed, or out-of-range
+  - `export_error`: API/network/platform failures
+  - `system_error`: Internal failures, resource exhaustion
+- **User notification:** Actionable error messages and remediation steps are provided for each error.
+- **Recovery:** User can retry, fix data, or adjust mapping as needed.
+
+### 14.1.2 Error Handling Testcase Example
+| error_code | trigger_condition | expected_behavior | recovery_action |
+|------------|------------------|-------------------|-----------------|
+| VALID-001 | Missing required field (e.g., email) | Error message shown, testcase not generated | User adds missing field, retry |
+| DATA-002 | Test data out of allowed range | Error message shown, testcase flagged | User corrects data, retry |
+| EXPORT-003 | API rate limit exceeded | Retry with backoff, error logged | Wait, retry later |
+| SYSTEM-004 | Memory limit exceeded | Operation aborted, error logged | Increase memory, retry |
+
 ### 14.2 Recovery & Resilience Testing
 - Testcases for system recovery after failure: retry logic, fallback mechanisms, data consistency after error.
 - Validate error logging and monitoring: errors properly logged, alerting triggered for critical issues.
@@ -359,7 +391,3 @@ To create an AI assistant capable of rapidly comprehending product specification
 - `trigger_condition`: What action or condition causes the error
 - `expected_behavior`: How system should respond (error message, state change, retry)
 - `recovery_action`: User action or system action to recover from error
-
----
-
-````
