@@ -12,15 +12,26 @@ To create an AI assistant capable of rapidly comprehending product specification
   - **Negative Path:** Error handling and invalid input scenarios.
   - **Edge Cases:** Boundary conditions (e.g., max characters, negative numbers, duplicates, etc.).
 
-- **Table Format:** `ID | Module | Scenario | Steps | Expected Result | Priority`
+- **Table Format (Extended):** `ID | Module | Scenario | Preconditions | Test Data | Steps | Expected Result | Acceptance Criteria | Priority`
 
 > Example table header (Markdown):
 
 ```
-| ID | Module | Scenario | Steps | Expected Result | Priority |
-|----|--------|----------|-------|-----------------|----------|
-| TC-001 | Auth | Login with valid credentials | 1. Open app 2. Enter valid username/password 3. Tap Login | User is logged in and taken to dashboard | High |
+| ID | Module | Scenario | Preconditions | Test Data | Steps | Expected Result | Acceptance Criteria | Priority |
+|----|--------|----------|---------------|-----------|-------|-----------------|---------------------|----------|
+| TC-001 | Auth | Login with valid credentials | User not logged in; Valid user account exists | Username: testuser, Password: secure123 | 1. Open app 2. Enter username/password 3. Tap Login | User logged in, dashboard displayed | User sees dashboard within 2s; Session token valid | High |
 ```
+
+- **Table Field Descriptions:**
+  - `ID`: Unique test case identifier (e.g., TC-001, STG-AUTH-001)
+  - `Module`: Feature or functional area being tested
+  - `Scenario`: Brief description of test scenario
+  - `Preconditions`: Required system state or setup before test execution
+  - `Test Data`: Specific data values used in the test (inputs, parameters)
+  - `Steps`: Numbered sequence of actions to perform
+  - `Expected Result`: Anticipated outcome of the test
+  - `Acceptance Criteria`: Specific conditions/metrics that must be met for test to pass
+  - `Priority`: Test case business importance (High / Medium / Low)
 
 ## 3. Workflow
 
@@ -236,4 +247,31 @@ To create an AI assistant capable of rapidly comprehending product specification
   - 1–2 Happy Path test cases
   - 2–3 Negative Path test cases
   - 3 Edge Cases (boundary, performance, concurrency, invalid input, etc.)
+  - **1–2 Security test cases** (authentication, authorization, input validation, data protection)
 - The AI should flag ambiguous spec items and optionally suggest clarifying questions.
+
+---
+
+## 11. Security Testing
+
+### 11.1 Security Test Case Generation
+- The tool shall generate Security-focused test cases covering:
+  - **Authentication & Authorization:** Login/logout, session management, privilege escalation, unauthorized access attempts.
+  - **Input Validation:** SQL injection, XSS attacks, buffer overflow, format string attacks, path traversal.
+  - **Data Protection:** Encryption verification, sensitive data exposure, secure transmission (HTTPS), data sanitization.
+  - **API Security:** Rate limiting, token expiration, API key exposure, CORS violations.
+  - **Session Security:** Session timeout, session fixation, session hijacking, CSRF protection.
+
+### 11.2 Security Test Case Criteria
+- Each security testcase includes:
+  - `threat_vector`: Type of security threat being tested (e.g., "SQL Injection", "XSS", "Authentication Bypass")
+  - `severity`: Threat severity level (Critical / High / Medium / Low)
+  - `mitigation`: Expected security control or remediation
+  - `compliance_ref`: Relevant security standard reference (e.g., "OWASP Top 10 A01:2021", "CWE-89", "PCI DSS 6.5.1")
+
+### 11.3 Security Testing Scope
+- Generate at minimum **1–2 security testcases per module** containing authentication, authorization, or data handling logic.
+- Flag specifications missing security requirements with recommendations for hardening.
+- Include edge cases for timeout, rate limiting, and error message information disclosure.
+
+````
