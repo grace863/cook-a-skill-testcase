@@ -254,24 +254,10 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ## 11. Security Testing
 
-### 11.1 Security Test Case Generation
-- The tool shall generate Security-focused test cases covering:
-  - **Authentication & Authorization:** Login/logout, session management, privilege escalation, unauthorized access attempts.
-  - **Input Validation:** SQL injection, XSS attacks, buffer overflow, format string attacks, path traversal.
-  - **Data Protection:** Encryption verification, sensitive data exposure, secure transmission (HTTPS), data sanitization.
-  - **API Security:** Rate limiting, token expiration, API key exposure, CORS violations.
-  - **Session Security:** Session timeout, session fixation, session hijacking, CSRF protection.
-
-### 11.2 Security Test Case Criteria
-- Each security testcase includes:
-  - `threat_vector`: Type of security threat being tested (e.g., "SQL Injection", "XSS", "Authentication Bypass")
-  - `severity`: Threat severity level (Critical / High / Medium / Low)
-  - `mitigation`: Expected security control or remediation
-  - `compliance_ref`: Relevant security standard reference (e.g., "OWASP Top 10 A01:2021", "CWE-89", "PCI DSS 6.5.1")
-
-### 11.3 Security Testing Scope
-- Generate at minimum **1–2 security testcases per module** containing authentication, authorization, or data handling logic.
-- Flag specifications missing security requirements with recommendations for hardening.
-- Include edge cases for timeout, rate limiting, and error message information disclosure.
+- Generate security testcases for: authentication, authorization, input validation, data protection, session management.
+- Cover common threats: SQL injection, XSS, unauthorized access, weak passwords, expired sessions.
+- Each testcase includes: `threat_vector` (threat type), `severity` (Critical/High/Medium/Low), `mitigation` (expected control).
+- Minimum **1–2 security testcases per module** with authentication/authorization/data handling.
+- Flag specifications missing security requirements.
 
 ````
