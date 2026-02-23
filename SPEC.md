@@ -47,20 +47,48 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ---
 
-## 5. Requirement Coverage
+## 5. Scope & Assumptions
 
-### 5.1 Requirement Extraction
+### 5.1 Project Scope
+- **In Scope:**
+  - Automated test case generation from Markdown specifications
+  - Support for happy path, negative, and edge case scenarios
+  - Multi-platform export (Jira, Zephyr, TestRail, Markdown, CSV, XLSX)
+  - Requirement coverage tracking and reporting
+  - Domain-specific terminology normalization
+  - Security & error handling test case generation
+
+- **Out of Scope:**
+  - Manual test execution/debugging
+  - Load testing or performance testing of target platforms
+  - Real-time test execution monitoring
+  - Integration with CI/CD pipelines (future enhancement)
+  - Mobile app UI testing (desktop/web focus only)
+
+### 5.2 Assumptions
+- Input specifications are well-formed Markdown files with clear feature descriptions
+- Users have valid API credentials for target export platforms (Jira, Zephyr, TestRail)
+- Network connectivity is available for API exports
+- Target platforms support OAuth 2.0 or API token authentication
+- Glossary files (if provided) follow JSON, YAML, or CSV format
+- Test data does not contain highly sensitive information; users redact PII before processing
+
+---
+
+## 6. Requirement Coverage
+
+### 6.1 Requirement Extraction
 - Extract requirements from specification headings (H1, H2, H3), numbered lists, bullet points, and explicit "User Stories" or "Acceptance Criteria" sections.
 - Assign unique identifier to each extracted requirement for tracking and mapping.
 
-### 5.2 Coverage Calculation
+### 6.2 Coverage Calculation
 - **Coverage Formula:** Coverage % = (Requirements with ≥1 mapped testcase) / (Total extracted requirements) × 100
 - **Breakdown by Category:**
   - Happy Path coverage %: testcases verifying successful flows
   - Negative Path coverage %: testcases for error handling and invalid inputs
   - Edge Case coverage %: testcases for boundary conditions and special scenarios
 
-### 5.3 Coverage Report Structure
+### 6.3 Coverage Report Structure
 - `total_requirements`: Total number of extracted requirements/stories
 - `covered_requirements`: Count of requirements with at least one mapped testcase
 - `coverage_percent`: Calculated coverage percentage (2 decimal places)
@@ -68,37 +96,37 @@ To create an AI assistant capable of rapidly comprehending product specification
 - `uncovered_items`: List of requirement IDs and descriptions with no mapped testcases
 - `mapping_examples`: Sample mappings showing requirement → testcase ID relationships
 
-### 5.4 Coverage Thresholds & Recommendations
+### 6.4 Coverage Thresholds & Recommendations
 - Configurable coverage threshold (default: 80%). Report marked `needs_review` if coverage falls below threshold.
 - Auto-suggest generation of additional edge-case or negative-path testcases if needed to meet target coverage.
 - Allow manual assignment of testcases to uncovered requirements.
 
 ---
 
-## 6. Language & Domain-Term Handling
+## 7. Language & Domain-Term Handling
 
-### 6.1 Glossary & Domain Dictionary Support
+### 7.1 Glossary & Domain Dictionary Support
 - Accept optional glossary file in JSON, YAML, or CSV format.
 - Glossary structure per term: `term`, `canonical_form`, `type` (noun/verb/entity/acronym), `notes`, `synonyms`.
 - Tool normalizes term occurrences to `canonical_form` when generating Module and Scenario names.
 - Preserve original terminology in Steps and Expected Results for clarity.
 
-### 6.2 Automatic Domain-Term Extraction & Suggestion
+### 7.2 Automatic Domain-Term Extraction & Suggestion
 - On first parse, extract candidate domain terms: capitalized tokens, frequently repeated nouns, acronyms, specialized phrases.
 - Present extracted terms to user for confirmation/refinement (interactive or config-driven approval).
 - Approved terms are added to a runtime glossary ensuring consistent usage throughout testcase generation.
 
-### 6.3 Term Disambiguation & Context Management
+### 7.3 Term Disambiguation & Context Management
 - Maintain term-context mapping: when a term appears in different modules, record and note its local meaning/interpretation.
 - Detect ambiguities: flag when the same term is used with conflicting senses across the specification.
 - Allow creation of module-scoped synonyms to clarify usage in specific contexts.
 
-### 6.4 Multilingual Specification & Edge Case Handling
+### 7.4 Multilingual Specification & Edge Case Handling
 - Auto-detect language of input specification (with configurable `language` override via config).
 - Apply appropriate tokenization and NLP rules based on detected language.
 - Normalize punctuation variants, unicode forms (NFD/NFC), and common OCR/digitization artifacts.
 
-### 6.5 Confidence Scoring & Interpretation Fallbacks
+### 7.5 Confidence Scoring & Interpretation Fallbacks
 - Each term mapping and interpretation assigned a confidence score (0.0 to 1.0 scale).
 - If confidence score < configurable threshold (default 0.7):
   - **Option A:** Include `"term_confidence_low"` annotation in the generated testcase for manual review.
@@ -106,9 +134,9 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ---
 
-## 7. Export & Multi-Platform Integrations
+## 8. Export & Multi-Platform Integrations
 
-### 7.1 Supported Export Targets
+### 8.1 Supported Export Targets
 - **Local Formats:** Markdown (table format), CSV (comma-separated values), XLSX (Microsoft Excel).
 - **Test Management Platforms (via API):**
   - **Jira** (Cloud and Server versions): Create test issues or integrate with Xray/ZAPI plugins.
@@ -116,25 +144,25 @@ To create an AI assistant capable of rapidly comprehending product specification
   - **TestRail** (Cloud and Server versions): TestRail API v2 for test case suites and test runs.
   - **Plugin Interface:** Extensible adapter pattern for adding custom export targets.
 
-### 7.2 Export Field Mapping & Templating
+### 8.2 Export Field Mapping & Templating
 - Define per-target mapping configuration that translates internal testcase fields to platform-specific fields.
 - **Supported mapping keys:** `title`, `steps`, `expected_result`, `priority`, `component`, `labels`, `custom_field_1`, etc.
 - **Template variable support:** Use `{{Module}}`, `{{Scenario}}`, `{{ID}}` placeholders in title and step templates.
 - **Example template:** Title = `{{ID}} - {{Module}}: {{Scenario}}`
 
-### 7.3 Authentication & API Security
+### 8.3 Authentication & API Security
 - Support multiple authentication methods: API token/key, HTTP Basic Auth, OAuth 2.0 (platform-dependent).
 - Credentials can be stored encrypted in local config (user opt-in) or passed via environment variables/CLI arguments per run.
 - Require explicit user consent before sending testcases to third-party platforms.
 - Option to mask/redact sensitive data fields before export.
 
-### 7.4 Rate Limiting, Batching & Idempotency
+### 8.4 Rate Limiting, Batching & Idempotency
 - Batch testcase exports to respect platform API rate limits; configurable batch size and inter-batch delay.
 - Use idempotency keys (UUID per export operation) to prevent duplicate testcase creation on retry.
 - Provide `dry-run` mode: display API request/response payloads and headers without actually sending data.
 - Track and report counts: sent, created, updated, failed for each export operation.
 
-### 7.5 Error Handling & Retry Strategy
+### 8.5 Error Handling & Retry Strategy
 - **Per-item error logging:** Detailed failure reasons for each failed testcase (e.g., "Invalid field 'priority'", "Network timeout", "API rate limit exceeded").
 - **Exponential backoff retry:** Transient errors trigger automatic retry with increasing delay (1s, 2s, 4s, 8s, max 5 retries).
 - **Error categories:**
@@ -148,7 +176,7 @@ To create an AI assistant capable of rapidly comprehending product specification
 - **Comprehensive Export Report:** Includes error summary, failed item details, and recovery recommendations.
 - **Recovery actions:** User can retry failed items, adjust mapping, or export to different target after fixing errors.
 
-### 7.6 Export Report Fields
+### 8.6 Export Report Fields
 - `target`: Export target name (e.g., "jira", "testrail", "zephyr", "markdown", "csv")
 - `sent`: Number of testcases sent
 - `created`: Number of testcases successfully created in target
@@ -159,7 +187,7 @@ To create an AI assistant capable of rapidly comprehending product specification
 - `duration_seconds`: Total execution time
 - `export_id`: Idempotency key (UUID) for tracking
 
-### 7.7 Platform-Specific Export Behaviors
+### 8.7 Platform-Specific Export Behaviors
 
 #### Jira Export
 - Creates test issues (using "Test" issue type or custom types via Xray/ZAPI).
@@ -187,27 +215,27 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ---
 
-## 8. Security, Privacy & Audit
+## 9. Security, Privacy & Audit
 
-### 8.1 Data Handling & Consent
+### 9.1 Data Handling & Consent
 - Users should redact Personally Identifiable Information (PII) and secrets from specifications before processing.
 - Tool provides optional automated redaction pass using regex patterns or user-defined rules.
 - When exporting to third-party APIs, require explicit user consent and allow selective field masking.
 
-### 8.2 Audit Trail & Logging
+### 9.2 Audit Trail & Logging
 - Maintain export audit log: timestamp, user identifier, target platform, testcase count, operation result (success/failure).
 - Store logs locally in `.stgqc_audit_log` file or configurable path.
 - Users may clear audit logs at any time; cleared logs are not recoverable.
 
 ---
 
-## 9. Extensibility & Configuration
+## 10. Extensibility & Configuration
 
-### 9.1 Plugin & Adapter Points
+### 10.1 Plugin & Adapter Points
 - **Custom Analyzers:** Users can provide custom rule sets and heuristics for domain-specific analysis.
 - **Custom Export Adapters:** Implement adapter interface to add support for additional test management platforms.
 
-### 9.2 Configuration File Support (`stgqcrc.yaml` or `stgqcrc.json`)
+### 10.2 Configuration File Support (`stgqcrc.yaml` or `stgqcrc.json`)
 - Stores all configuration: glossary file path, export target definitions, API credentials (encrypted references), priority mapping, coverage threshold, language override, export field templates, audit log path.
 - Example structure:
   ```yaml
@@ -227,9 +255,47 @@ To create an AI assistant capable of rapidly comprehending product specification
   language: "en"
   ```
 
+### 10.3 Dependencies & Tech Stack
+- **Runtime:** Python 3.8+ or Node.js 14+
+- **Core Libraries:**
+  - Markdown parser (markdown-it or python-markdown)
+  - YAML/JSON configuration parser (PyYAML, json module)
+  - HTTP client (requests library, axios, or built-in fetch)
+  - Excel export (openpyxl, xlsx library)
+  - NLP/Tokenization (NLTK, spaCy for advanced language handling)
+- **External APIs:** Jira REST API, Zephyr API, TestRail API v2
+- **Optional:** Docker for containerized deployment, Git for version control integration
+- **Development:** Unit testing framework (pytest, Jest), linting (ESLint, pylint), documentation (Sphinx, JSDoc)
+
 ---
 
-## 10. Deliverables & Outputs
+## 11. Performance Requirements
+
+### 11.1 Response Time & Throughput
+- **Specification parsing:** < 2 seconds for specifications up to 50 pages (Markdown format)
+- **Test case generation:** < 5 seconds for typical 50-requirement specification
+- **Export to platform:** < 30 seconds for batch of up to 500 test cases (including API latency)
+- **Coverage report generation:** < 3 seconds
+
+### 11.2 Scalability & Limits
+- **Maximum testcases per export:** 5,000 (configurable)
+- **Maximum specification size:** 100 MB (Markdown file)
+- **Concurrent export operations:** Support at least 2 simultaneous exports
+- **API rate limiting:** Respect platform rate limits (Jira: 100 req/min, Zephyr: 500 req/min, TestRail: 80 req/min)
+
+### 11.3 Resource Requirements
+- **Memory:** Base ~ 50 MB; + 1 MB per 1,000 testcases generated
+- **Disk:** Configuration + glossary files ~ 10 MB; audit logs ~ 1 MB per 10,000 exports
+- **Network:** Minimal (API calls only); no telemetry or background uploads
+
+### 11.4 Availability & Reliability
+- **Uptime target:** 99.5% (for SaaS/cloud deployment)
+- **Error recovery:** Automatic retry with exponential backoff for transient failures
+- **Idempotency:** Export operations are idempotent (safe to retry)
+
+---
+
+## 12. Deliverables & Outputs
 
 - **Test Cases Files:**
   - `tests.md` (Markdown table format, default export)
@@ -260,7 +326,7 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ---
 
-## 11. Security Testing
+## 13. Security Testing
 
 - Generate security testcases for: authentication, authorization, input validation, data protection, session management.
 - Cover common threats: SQL injection, XSS, unauthorized access, weak passwords, expired sessions.
@@ -270,25 +336,25 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ---
 
-## 12. Error Handling & Edge Case Testing
+## 14. Error Handling & Edge Case Testing
 
-### 12.1 Error Scenario Coverage
+### 14.1 Error Scenario Coverage
 - Generate testcases for error conditions: invalid input, missing data, timeout, network failures, resource exhaustion.
 - Cover HTTP error codes: 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 500 (Server Error), 503 (Service Unavailable).
 - Test error messages: clarity, no information disclosure, appropriate severity level.
 
-### 12.2 Recovery & Resilience Testing
+### 14.2 Recovery & Resilience Testing
 - Testcases for system recovery after failure: retry logic, fallback mechanisms, data consistency after error.
 - Validate error logging and monitoring: errors properly logged, alerting triggered for critical issues.
 - Test graceful degradation: system continues functioning with reduced capacity when non-critical components fail.
 
-### 12.3 Edge Case Scenarios
+### 14.3 Edge Case Scenarios
 - Boundary conditions: max/min values, empty inputs, special characters, extremely large payloads.
 - Concurrent operations: race conditions, deadlock prevention, resource contention.
 - State transitions: invalid state changes, incomplete workflows, session expiration during operations.
 - Timeout & rate limiting: slow responses, request throttling, backoff behavior.
 
-### 12.4 Error Testcase Format
+### 14.4 Error Testcase Format
 - `error_code`: System or HTTP error code (e.g., "ERR-001", "400", "TIMEOUT")
 - `trigger_condition`: What action or condition causes the error
 - `expected_behavior`: How system should respond (error message, state change, retry)
