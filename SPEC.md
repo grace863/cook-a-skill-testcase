@@ -135,10 +135,18 @@ To create an AI assistant capable of rapidly comprehending product specification
 - Track and report counts: sent, created, updated, failed for each export operation.
 
 ### 7.5 Error Handling & Retry Strategy
-- Per-item error logging with detailed failure reasons.
-- Implement exponential backoff retry for transient errors (network timeouts, rate limit responses).
-- Log persistent errors with actionable remediation steps.
-- Generate comprehensive Export Report for user review and audit trail.
+- **Per-item error logging:** Detailed failure reasons for each failed testcase (e.g., "Invalid field 'priority'", "Network timeout", "API rate limit exceeded").
+- **Exponential backoff retry:** Transient errors trigger automatic retry with increasing delay (1s, 2s, 4s, 8s, max 5 retries).
+- **Error categories:**
+  - `validation_error`: Invalid testcase data (missing field, invalid format)
+  - `auth_error`: Authentication failure (invalid token, expired credentials)
+  - `rate_limit_error`: API rate limit exceeded (auto-retry with backoff)
+  - `network_error`: Connection timeout, DNS failure (auto-retry with backoff)
+  - `server_error`: Target platform server error (auto-retry with backoff)
+  - `persistent_error`: Unrecoverable error, requires manual intervention
+- **Error messages:** Actionable remediation steps (e.g., "Renew API token", "Check field mapping", "Verify network connectivity").
+- **Comprehensive Export Report:** Includes error summary, failed item details, and recovery recommendations.
+- **Recovery actions:** User can retry failed items, adjust mapping, or export to different target after fixing errors.
 
 ### 7.6 Export Report Fields
 - `target`: Export target name (e.g., "jira", "testrail", "zephyr", "markdown", "csv")
@@ -259,5 +267,33 @@ To create an AI assistant capable of rapidly comprehending product specification
 - Each testcase includes: `threat_vector` (threat type), `severity` (Critical/High/Medium/Low), `mitigation` (expected control).
 - Minimum **1–2 security testcases per module** with authentication/authorization/data handling.
 - Flag specifications missing security requirements.
+
+---
+
+## 12. Error Handling & Edge Case Testing
+
+### 12.1 Error Scenario Coverage
+- Generate testcases for error conditions: invalid input, missing data, timeout, network failures, resource exhaustion.
+- Cover HTTP error codes: 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 500 (Server Error), 503 (Service Unavailable).
+- Test error messages: clarity, no information disclosure, appropriate severity level.
+
+### 12.2 Recovery & Resilience Testing
+- Testcases for system recovery after failure: retry logic, fallback mechanisms, data consistency after error.
+- Validate error logging and monitoring: errors properly logged, alerting triggered for critical issues.
+- Test graceful degradation: system continues functioning with reduced capacity when non-critical components fail.
+
+### 12.3 Edge Case Scenarios
+- Boundary conditions: max/min values, empty inputs, special characters, extremely large payloads.
+- Concurrent operations: race conditions, deadlock prevention, resource contention.
+- State transitions: invalid state changes, incomplete workflows, session expiration during operations.
+- Timeout & rate limiting: slow responses, request throttling, backoff behavior.
+
+### 12.4 Error Testcase Format
+- `error_code`: System or HTTP error code (e.g., "ERR-001", "400", "TIMEOUT")
+- `trigger_condition`: What action or condition causes the error
+- `expected_behavior`: How system should respond (error message, state change, retry)
+- `recovery_action`: User action or system action to recover from error
+
+---
 
 ````
