@@ -8,21 +8,58 @@ Follow this workflow **in order**:
 
 ---
 
+## Step 0 — Pre-flight & Spec Type Detection
+
+Before doing anything else:
+
+1. Read the **entire** specification.
+2. Label each section with its feature type(s):
+   - `[AUTH]` — login, logout, token, lockout, password, session
+   - `[CRUD]` — create, read, update, delete any resource
+   - `[FILE]` — file or image upload, attachment
+   - `[PAY]` — checkout, payment gateway, refund, transaction
+   - `[SEARCH]` — search, filter, sort, pagination
+   - `[STATE]` — status transitions, order flow, approval workflow
+   - `[REPORT]` — export, download, report generation
+   - `[NOTIFY]` — email, push notification, SMS, alert
+3. A section may carry multiple labels.
+4. If the spec is **not well-formed Markdown**, normalize it and proceed — do not reject.
+5. If any section is **incomplete or vague**, annotate assumptions with `⚠️ ASSUMED:` and generate test cases anyway using common-sense defaults for that feature type.
+
+---
+
 ## Step 1 — Extract Requirements
 
-- Scan all headings (H1/H2/H3), numbered lists, bullet points, User Stories, and Acceptance Criteria sections.
+- Scan all headings (H1/H2/H3), numbered lists, bullet points, User Stories, and Acceptance Criteria.
 - Assign a unique ID (REQ-001, REQ-002, …) to every extracted requirement.
-- Output a table: `REQ ID | Section | Requirement Description`
+- Tag each requirement with its feature type label(s) from Step 0.
+- Output a table: `REQ ID | Feature Type | Section | Requirement Description`
 
 ---
 
 ## Step 2 — Smart Analysis
 
 For each primary feature/module:
-- Flag ambiguities with `⚠️ AMBIGUITY:`
-- List ≥3 edge cases not explicitly stated in the spec
-- Identify security threats (auth, input validation, data protection, session)
-- Flag missing security requirements with `⚠️ MISSING SECURITY REQ:`
+
+1. **Flag ambiguities** with `⚠️ AMBIGUITY:` — unclear rules, undefined behavior, missing thresholds.
+2. **Identify edge cases** using the mandatory checklist below for the feature's type. Minimum 3 edge cases per feature.
+3. **Identify security threats** (auth, input validation, data protection, session).
+4. **Flag missing security requirements** with `⚠️ MISSING SECURITY REQ:`.
+
+**Mandatory edge case checklist by feature type:**
+
+| Feature Type | Edge Cases to Check |
+|---|---|
+| `[AUTH]` | Lockout at exact threshold (N−1 vs N), token expiry at boundary second, concurrent sessions, login with non-active account |
+| `[CRUD]` | Empty list result, max-length field, duplicate key, soft-delete visibility, cascade delete side-effects |
+| `[FILE]` | File at exact size limit (±1 byte), unsupported MIME type, duplicate file hash, corrupted/empty file, concurrent uploads |
+| `[PAY]` | Gateway timeout at boundary, double-submit, gateway failure mid-redirect, zero-amount |
+| `[SEARCH]` | Zero results (not error), max page size, special chars in query, combined filters with no match, page beyond last |
+| `[STATE]` | All invalid transitions rejected, concurrent race condition, access in intermediate state |
+| `[REPORT]` | Zero records, 1 record, date range start = end, max count + 1 |
+| `[NOTIFY]` | Delivery to deactivated account, duplicate trigger, retry exhausted |
+
+> Unknown feature type → apply `[CRUD]` patterns + `⚠️ ASSUMED: defaulted to CRUD checklist`
 
 ---
 
@@ -31,7 +68,7 @@ For each primary feature/module:
 Per primary feature, generate:
 - **1–2 Happy Path** (`TC-<MODULE>-<NNN>`)
 - **2–3 Negative Path** (`NEG-<MODULE>-<NNN>`)
-- **3 Edge Cases** (`EDGE-<MODULE>-<NNN>`)
+- **3 Edge Cases** (`EDGE-<MODULE>-<NNN>`) — driven by checklist above
 - **1–2 Security** (`SEC-<MODULE>-<NNN>`)
 
 **Standard table:**

@@ -1,26 +1,18 @@
 # Smart Test Case Generator (STG-QC)
 
-A Claude Code skill that reads a product specification (Markdown) and automatically generates a comprehensive, structured set of test cases — including happy path, negative path, edge cases, and security scenarios.
+A Claude Code skill that reads any product specification and automatically generates a comprehensive, structured set of test cases — including happy path, negative path, edge cases, and security scenarios.
 
 ---
 
 ## What it does
 
-Given any feature specification in Markdown format, STG-QC will:
+Given any feature specification (Markdown, plain text, or pasted content), STG-QC will:
 
-1. **Extract** all requirements from headings, lists, user stories, and acceptance criteria
-2. **Analyze** for ambiguities, missing security requirements, and unstated edge cases
-3. **Generate** test cases grouped by module and category with full traceability
-4. **Report** requirement coverage with a REQ → TC mapping table
-
-### Output per feature module
-
-| Category | Count | ID Format |
-|----------|-------|-----------|
-| Happy Path | 1–2 | `TC-<MODULE>-<NNN>` |
-| Negative Path | 2–3 | `NEG-<MODULE>-<NNN>` |
-| Edge Cases | 3 | `EDGE-<MODULE>-<NNN>` |
-| Security | 1–2 | `SEC-<MODULE>-<NNN>` |
+1. **Detect** the feature type of each section: `[AUTH]` `[CRUD]` `[FILE]` `[PAY]` `[SEARCH]` `[STATE]` `[REPORT]` `[NOTIFY]`
+2. **Extract** all requirements with full traceability IDs
+3. **Analyze** using a type-specific edge case checklist — not generic guesswork
+4. **Generate** test cases grouped by module and category
+5. **Report** requirement coverage with a REQ → TC mapping table
 
 ---
 
@@ -39,15 +31,36 @@ Paste your spec content and say:
 
 ---
 
-## Output format
+## Output per feature module
 
-Standard test case table:
+| Category | ID Format | Count |
+|----------|-----------|-------|
+| Happy Path | `TC-<MODULE>-<NNN>` | 1–2 |
+| Negative Path | `NEG-<MODULE>-<NNN>` | 2–3 |
+| Edge Cases | `EDGE-<MODULE>-<NNN>` | 3 |
+| Security | `SEC-<MODULE>-<NNN>` | 1–2 |
 
-| ID | Module | Scenario | Preconditions | Test Data | Steps | Expected Result | Acceptance Criteria | Priority |
+**Security tests** include: `threat_vector | severity | mitigation`
 
-Security test cases add: `threat_vector | severity | mitigation`
+**Edge/Error tests** include: `error_code | trigger_condition | expected_behavior | recovery_action`
 
-Edge/Error test cases add: `error_code | trigger_condition | expected_behavior | recovery_action`
+---
+
+## Demo result — E-Commerce spec (5 modules, 56 requirements)
+
+**Input** (`demo-spec.md`): E-Commerce Product & Order Management — 5 modules covering `[CRUD]` `[FILE]` `[STATE]` `[PAY]` `[SEARCH]`.
+
+**Output** (`demo-output.md`): 60 test cases, 100% requirement coverage.
+
+| Module | Happy | Negative | Edge | Security | Total |
+|--------|-------|----------|------|----------|-------|
+| Product Management | 2 | 3 | 3 | 2 | 10 |
+| Image Upload | 1 | 3 | 3 | 2 | 9 |
+| Shopping Cart | 2 | 3 | 3 | 2 | 10 |
+| Order & Payment | 3 | 3 | 3 | 2 | 11 |
+| Search & Filter | 2 | 3 | 3 | 2 | 10 |
+| Review & Rating | 2 | 3 | 3 | 2 | 10 |
+| **TOTAL** | **12** | **18** | **18** | **12** | **60** |
 
 ---
 
@@ -55,26 +68,9 @@ Edge/Error test cases add: `error_code | trigger_condition | expected_behavior |
 
 | File | Description |
 |------|-------------|
-| [`SPEC.md`](SPEC.md) | Full skill specification — goals, workflow, field definitions, export targets |
-| [`SKILL.md`](SKILL.md) | AI instruction prompt — what the skill does and how |
+| [`SKILL-CARD.md`](SKILL-CARD.md) | One-page skill showcase |
+| [`SPEC.md`](SPEC.md) | Full skill specification — goals, workflow, field definitions |
+| [`SKILL.md`](SKILL.md) | AI instruction prompt — the core logic Claude executes |
 | [`.claude/commands/stg-qc.md`](.claude/commands/stg-qc.md) | Registered slash command |
-| [`demo-spec.md`](demo-spec.md) | Sample product specification (User Registration & Login) |
-| [`demo-output.md`](demo-output.md) | Sample generated test cases from `demo-spec.md` |
-
----
-
-## Example
-
-**Input** (`demo-spec.md`): User Registration & Login specification with 4 modules, 27 requirements.
-
-**Output** (`demo-output.md`): 42 test cases across 4 modules, 100% requirement coverage, full traceability matrix.
-
-```
-Module              | Happy | Negative | Edge | Security | Total
---------------------|-------|----------|------|----------|------
-User Registration   |   2   |    4     |  4   |    2     |  12
-Email Verification  |   1   |    3     |  3   |    2     |   9
-User Login          |   2   |    3     |  3   |    3     |  11
-Password Reset      |   2   |    3     |  3   |    2     |  10
-TOTAL               |   7   |   13     | 13   |    9     |  42
-```
+| [`demo-spec.md`](demo-spec.md) | Sample input — E-Commerce (5 modules, 56 requirements) |
+| [`demo-output.md`](demo-output.md) | Sample output — 60 test cases with coverage report |

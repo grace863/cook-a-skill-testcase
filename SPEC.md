@@ -35,10 +35,30 @@ To create an AI assistant capable of rapidly comprehending product specification
 
 ## 3. Workflow
 
-- **Step 1: Extract:** The AI scans the specification to identify all key features and constraints.
-- **Step 2: Smart Analysis:** The AI proactively identifies potential ambiguities and generates at least 3 edge cases for each primary feature that may not be explicitly mentioned in the spec.
-- **Step 3: Generate:** Writes detailed test steps and expected results based on the analyzed logic.
-- **Step 4: Review & Format:** Self-checks for consistency and ensures the output matches the required structured format.
+- **Step 0 — Pre-flight & Spec Type Detection:** Read the entire specification and classify each section by feature type: `[AUTH]` `[CRUD]` `[FILE]` `[PAY]` `[SEARCH]` `[STATE]` `[REPORT]` `[NOTIFY]`. Accept any readable input — do not reject informal or imperfect Markdown. If the spec is incomplete, proceed with best-effort analysis and annotate all assumptions with `⚠️ ASSUMED:`.
+
+- **Step 1 — Extract:** Scan all headings (H1–H3), numbered lists, bullet points, User Stories, and Acceptance Criteria. Assign a unique ID (REQ-001, REQ-002, …) to each requirement and tag it with its feature type(s). Output a table: `REQ ID | Feature Type | Section | Requirement Description`.
+
+- **Step 2 — Smart Analysis:** For each feature, use the type-specific edge case checklist (see Section 3a) to identify at least 3 edge cases. Flag ambiguities (`⚠️ AMBIGUITY:`), detect security threats, and note missing security requirements (`⚠️ MISSING SECURITY REQ:`). Never skip a feature due to incomplete information — apply defaults and annotate.
+
+- **Step 3 — Generate:** Write test cases using the structured table format. Per primary feature: 1–2 Happy Path, 2–3 Negative Path, 3 Edge Cases (driven by type-specific checklist), 1–2 Security tests.
+
+- **Step 4 — Review & Format:** Self-check consistency. Ensure all REQ IDs map to at least one test case. Output Coverage Report.
+
+---
+
+## 3a. Supported Feature Types & Required Test Patterns
+
+| Label | Feature Type | Required Edge Cases | Required Security Cases |
+|---|---|---|---|
+| `[AUTH]` | Authentication / Session | Lockout at exact threshold, token expiry at boundary second, concurrent sessions, non-active account login | Brute force, credential stuffing, session hijacking, JWT exposure |
+| `[CRUD]` | Create / Read / Update / Delete | Empty list, max-length field, duplicate key, soft-delete visibility, cascade delete | Unauthorized access to other user's data, privilege escalation |
+| `[FILE]` | File / Image Upload | File at exact size limit (±1 byte), unsupported MIME type, duplicate hash, corrupted/empty file, concurrent uploads | Malicious file content (XSS in SVG, script in filename), path traversal |
+| `[PAY]` | Payment / Transaction | Gateway timeout at boundary, double-submit, gateway failure mid-redirect, zero-amount | Payment tampering, replay attack, sensitive data in logs |
+| `[SEARCH]` | Search & Filter | Zero results (not error), max page size, special characters, combined filters with no match, page beyond last | SQL/NoSQL injection via search params, filter bypass |
+| `[STATE]` | State Machine / Workflow | All invalid transitions rejected, concurrent race condition, access in intermediate state | Forced transition via parameter tampering |
+| `[REPORT]` | Reporting / Export | Zero records, 1 record, date range start = end, max count + 1 | Unauthorized export of other users' data |
+| `[NOTIFY]` | Notifications / Email | Delivery to deactivated account, duplicate trigger, retry exhausted | Email header injection, PII exposure in content |
 
 ## 4. Key Strengths
 
@@ -66,7 +86,7 @@ To create an AI assistant capable of rapidly comprehending product specification
   - Mobile app UI testing (desktop/web focus only)
 
 ### 5.2 Assumptions
-- Input specifications are well-formed Markdown files with clear feature descriptions
+- Input specifications are preferably Markdown, but the tool accepts imperfect, informal, or plain-text input — auto-normalize and proceed; only surface a warning if input is completely unreadable
 - Users have valid API credentials for target export platforms (Jira, Zephyr, TestRail)
 - Network connectivity is available for API exports
 - Target platforms support OAuth 2.0 or API token authentication

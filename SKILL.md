@@ -22,17 +22,57 @@ or simply paste specification content and ask to generate test cases.
 
 Follow these steps **in order**:
 
+### Step 0 — Pre-flight & Spec Type Detection
+
+Before doing anything else:
+
+1. Read the **entire** specification from top to bottom.
+2. Classify each section with one or more feature type labels:
+
+| Label | Feature Type | Applies When Spec Describes |
+|---|---|---|
+| `[AUTH]` | Authentication / Session | Login, logout, token, lockout, password, session |
+| `[CRUD]` | Create / Read / Update / Delete | Adding, editing, deleting, listing any resource |
+| `[FILE]` | File / Image Upload | File upload, image processing, attachment |
+| `[PAY]` | Payment / Transaction | Checkout, payment gateway, refund, transaction |
+| `[SEARCH]` | Search & Filter | Search, filter, sort, pagination |
+| `[STATE]` | State Machine / Workflow | Status transitions, order flow, approval flow |
+| `[REPORT]` | Reporting / Export | Export, download, report generation |
+| `[NOTIFY]` | Notifications / Email | Email sending, push notification, SMS, alert |
+
+3. A section may have multiple labels (e.g., `[STATE][PAY]` for order payment flow).
+4. **Do not reject imperfect specs.** If the input is not well-formed Markdown, auto-normalize and proceed.
+5. **Do not skip vague sections.** If a section is incomplete, annotate every assumption with `⚠️ ASSUMED:` and generate test cases based on common-sense defaults for that feature type.
+
 ### Step 1 — Extract Requirements
 - Scan all headings (H1, H2, H3), numbered lists, bullet points, User Stories, and Acceptance Criteria sections.
 - Assign a unique requirement ID (REQ-001, REQ-002, …) to every extracted requirement.
-- List extracted requirements briefly before generating test cases.
+- Tag each requirement with its feature type label(s) from Step 0.
+- Output as a table: `REQ ID | Feature Type | Section | Requirement Description`
 
 ### Step 2 — Smart Analysis
+
 For each primary feature/requirement:
-- Identify **ambiguities** and flag them with `⚠️ AMBIGUITY:` inline.
-- Proactively identify at least **3 edge cases** not explicitly stated in the spec.
-- Identify potential **security threats** relevant to the feature (auth, input validation, data protection, session management).
-- Note missing security requirements with `⚠️ MISSING SECURITY REQ:`.
+
+1. **Flag ambiguities** with `⚠️ AMBIGUITY:` — unclear rules, undefined behavior, missing thresholds, contradictory statements.
+2. **Identify edge cases** using the checklist below for the requirement's feature type. Minimum **3 edge cases per feature**.
+3. **Identify security threats** relevant to the feature type (see Security Test Coverage section).
+4. **Flag missing security requirements** with `⚠️ MISSING SECURITY REQ:`.
+
+**Edge case checklist by feature type — use these as mandatory starting points:**
+
+| Feature Type | Required Edge Cases to Check |
+|---|---|
+| `[AUTH]` | Lockout at exact threshold (N−1 vs N attempts), token expiry at boundary second, concurrent sessions from multiple devices, login attempt with non-active account status (pending/banned) |
+| `[CRUD]` | Empty list (zero results), max-length field value, duplicate key/unique constraint, soft-delete visibility in list, cascade delete side-effects on related records |
+| `[FILE]` | File at exact size limit (limit − 1 byte, limit + 1 byte), unsupported MIME type with valid extension, duplicate file (same hash), corrupted/empty file (0 bytes), concurrent uploads by same user |
+| `[PAY]` | Payment gateway timeout at exact boundary, double-submit (same order twice rapidly), gateway failure mid-redirect (user closes browser), zero-amount edge case |
+| `[SEARCH]` | Query returning zero results (must return `[]` not error), maximum page size boundary, special characters in query (`<`, `>`, `%`, `'`), combined filters with no matching results, page number beyond last page |
+| `[STATE]` | All invalid state transitions (attempt each one and verify rejection), concurrent state-change race condition (two requests simultaneously), access to resource in intermediate/transient state |
+| `[REPORT]` | Export with zero records, export with exactly 1 record, date range where start = end, max allowed record count + 1 |
+| `[NOTIFY]` | Notification to deactivated account, duplicate trigger (same event fires twice), delivery failure + retry exhausted |
+
+> If a feature type is not in this list, apply `[CRUD]` patterns and annotate with `⚠️ ASSUMED: defaulted to CRUD edge case checklist`.
 
 ### Step 3 — Generate Test Cases
 Produce test cases using the table format below. Generate **per primary feature**:
@@ -104,6 +144,20 @@ After all test cases, output a coverage summary block:
 > Example: If 20 of 27 REQs have a Happy Path TC → Happy Path = 20/27 = 74%.
 
 If coverage < 80%, automatically suggest additional test cases to close the gap.
+
+---
+
+## Handling Incomplete Specifications
+
+The tool must generate test cases for **any** spec, regardless of completeness. Never refuse or skip a feature because the spec is vague.
+
+| Situation | Action |
+|---|---|
+| Field validation rules not specified | Apply common-sense defaults (e.g., required = not empty, string = max 255 chars) and annotate with `⚠️ ASSUMED:` |
+| Expected error behavior not specified | Default to: return appropriate HTTP error code + descriptive message. Annotate with `⚠️ ASSUMED:` |
+| Success behavior not fully described | Infer from context (e.g., CRUD create → return 201 + created resource). Annotate with `⚠️ ASSUMED:` |
+| Section heading with no detail | Generate 1 Happy Path + 1 Negative Path based on the heading alone. Flag entire section with `⚠️ AMBIGUITY: section has no detail — test cases based on heading inference` |
+| Non-Markdown input (plain text, informal notes) | Auto-normalize structure, extract requirements best-effort, proceed normally |
 
 ---
 
@@ -183,7 +237,7 @@ Flag any spec section that lacks security requirements:
 
 ## Constraints & Assumptions
 
-- Input specification must be well-formed Markdown.
+- Input specification should be in Markdown, but the tool accepts imperfect, informal, or plain-text input. Auto-normalize formatting issues and proceed. Only surface a warning if the input is completely unreadable.
 - Do **not** generate test cases for: load/performance testing, CI/CD pipeline testing, or mobile-native UI (unless explicitly in scope).
 - Test data must NOT contain real PII — use placeholder values (`testuser@example.com`, `+1-555-000-0000`, `John Doe`, etc.).
 - Maximum 5,000 test cases per specification. For very large specs, generate by module on request.
@@ -194,10 +248,17 @@ Flag any spec section that lacks security requirements:
 ## Example Output (abbreviated)
 
 ```markdown
+## Step 0 — Spec Type Detection
+- Section "Authentication": [AUTH]
+- Section "User Profile": [CRUD]
+
 ## Extracted Requirements
-- REQ-001: User can log in with valid credentials
-- REQ-002: System rejects login with invalid password
-- REQ-003: Session expires after 30 minutes of inactivity
+
+| REQ ID | Feature Type | Section | Requirement Description |
+|--------|--------------|---------|------------------------|
+| REQ-001 | [AUTH] | Authentication | User can log in with valid credentials |
+| REQ-002 | [AUTH] | Authentication | System rejects login with invalid password |
+| REQ-003 | [AUTH] | Authentication | Session expires after 30 minutes of inactivity |
 
 ---
 
